@@ -38,9 +38,9 @@ function Rating({value, onRatingChange, disabled}) {
                 <span
                 key={i}
                 className={`star ${isFilled?'filled':'empty'}`}
-                onMouseEnter={()=>handleMouseEnter}
+                onMouseEnter={()=>handleMouseEnter(i)}
                 onMouseLeave={()=>handleMouseLeave}
-                onClick={()=>handleClick}
+                onClick={()=>handleClick(i)}
                 style={{pointerEvents:disabled?'none':'auto'}}
                 >★</span>
             )
