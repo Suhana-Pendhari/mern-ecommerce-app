@@ -35,6 +35,41 @@ export const login = createAsyncThunk('user/login', async ({email, password}, {r
     }
 })
 
+// Load user API
+export const loadUser = createAsyncThunk('user/loadUser', async(_, {rejectWithValue})=>{
+    try {
+        const {data} = await axios.get('/api/v1/profile');
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to load user profile');
+    }
+})
+
+// Logout API
+export const logout = createAsyncThunk('user/logout', async(_, {rejectWithValue})=>{
+    try {
+        const {data} = await axios.post('/api/v1/logout', {withCredentials:true});
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to logout User');
+    }
+})
+
+// Update profile API
+export const updateProfile = createAsyncThunk('user/updateProfile', async(userData, {rejectWithValue})=>{
+    try {
+        const config = {
+            headers:{
+                'Content-Type':'multipart/form-data'
+            }
+        }
+        const {data} = await axios.put('/api/v1/profile/update', userData, config);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || {message:'Profile Update Failed, Please try again Later'});
+    }
+})
+
 const userSlice = createSlice({
     name: 'user',
     initialState: {
@@ -42,7 +77,8 @@ const userSlice = createSlice({
         loading:false,
         error:null,
         success:false,
-        isAuthenticated:false
+        isAuthenticated:false,
+        message:null
     },
     reducers:{
         removeErrors:(state)=>{
@@ -92,6 +128,57 @@ const userSlice = createSlice({
             state.error = action.payload?.message || 'Login failed. Please try again later';
             state.user = null;
             state.isAuthenticated = false;
+        })
+
+        // Laoding User cases
+        .addCase(loadUser.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(loadUser.fulfilled, (state, action)=>{
+            state.loading = false;
+            state.error = null;
+            state.user = action.payload?.user || null;
+            state.isAuthenticated = Boolean(action.payload?.user);
+        })
+        .addCase(loadUser.rejected, (state, action)=>{
+            state.loading = false;
+            state.error = action.payload?.message || 'Failed to load user profile';
+            state.user = null;
+            state.isAuthenticated = false;
+        })
+
+        // Logout User cases
+        .addCase(logout.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(logout.fulfilled, (state, action)=>{
+            state.loading = false;
+            state.error = null;
+            state.user = null;
+            state.isAuthenticated = false;
+        })
+        .addCase(logout.rejected, (state, action)=>{
+            state.loading = false;
+            state.error = action.payload?.message || 'Failed to logout User';
+        })
+
+        // Update profile cases
+        .addCase(updateProfile.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(updateProfile.fulfilled, (state, action)=>{
+            state.loading = false;
+            state.error = null;
+            state.user = action.payload?.user || null;
+            state.success = action.payload?.success;
+            state.message = action.payload?.message;
+        })
+        .addCase(updateProfile.rejected, (state, action)=>{
+            state.loading = false;
+            state.error = action.payload?.message || 'Profile Update Failed, Please try again Later';
         })
     }
 })
