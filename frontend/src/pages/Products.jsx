@@ -18,14 +18,16 @@ function Products() {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const keyword = searchParams.get("keyword");
+    const category = searchParams.get("category");
     const pageFromURL = parseInt(searchParams.get("page"), 10) || 1;
     const [currentPage, setCurrentPage] = useState(pageFromURL);
     const navigate = useNavigate();
+    const categories = ['laptop', 'mobile', 'tv', 'fruits', 'glass'];
 
 
     useEffect(() => {
-        dispatch(getProduct({keyword, page:currentPage}));
-    }, [dispatch, keyword, currentPage])
+        dispatch(getProduct({keyword, page:currentPage, category}));
+    }, [dispatch, keyword, currentPage, category])
     useEffect(() => {
         if (error) {
             toast.error(error.message, { position: 'top-center', autoClose: 3000 });
@@ -35,7 +37,7 @@ function Products() {
     const handlePageChange = (page)=>{
         if(page !== currentPage){
             setCurrentPage(page);
-            const newSearchParams = new URLSearchParams(LocalGasStation.search);
+            const newSearchParams = new URLSearchParams(location.search);
             if(page === 1){
                 newSearchParams.delete('page');
             }else{
@@ -43,6 +45,12 @@ function Products() {
             }
             navigate(`?${newSearchParams.toString()}`)
         }
+    }
+    const handleCategoryClick = (category)=>{
+        const newSearchParams = new URLSearchParams(location.search);
+        newSearchParams.set('category', category);
+        newSearchParams.delete('page');
+        navigate(`?${newSearchParams.toString()}`);
     }
     return (
         <>
@@ -53,6 +61,15 @@ function Products() {
                     <div className="filter-section">
                         <h3 className="filter-heading">CATEGORIES</h3>
                         {/* Render All Categories */}
+                        <ul>
+                            {
+                                categories.map((category)=>{
+                                    return (
+                                        <li key={category} onClick={()=>handleCategoryClick(category)}>{category}</li>
+                                    )
+                                })
+                            }
+                        </ul>
                     </div>
 
                     <div className="products-section">
