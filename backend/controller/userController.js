@@ -4,17 +4,23 @@ import crypto from "crypto"
 import HandleError from "../utils/handleError.js";
 import { sendToken } from "../utils/jwtToken.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { v2 as cloudinary } from 'cloudinary';
+
 
 export const registerUser = handleAsyncError(async(req, res, next) => {
-    const {name, email, password} = req.body;
-
+    const {name, email, password, avatar} = req.body;
+    const myCloud = await cloudinary.uploader.upload(avatar, {
+        folder: 'avatars',
+        width: 150,
+        crop: 'scale'
+    })
     const user = await User.create({
         name,
         email,
         password,
         avatar: {
-            public_id: "This is temp id",
-            url: "This is temp url"
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url
         }
     })
 
