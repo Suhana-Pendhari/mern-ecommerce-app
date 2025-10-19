@@ -70,6 +70,51 @@ export const updateProfile = createAsyncThunk('user/updateProfile', async(userDa
     }
 })
 
+// Update Password API
+export const updatePassword = createAsyncThunk('user/updatePassword', async(formData, {rejectWithValue})=>{
+    try {
+        const config = {
+            headers:{
+                'Content-Type':'application/json'
+            }
+        }
+        const {data} = await axios.put('/api/v1/password/update', formData, config);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Password Update Failed');
+    }
+})
+
+// Forgot Password API
+export const forgotPassword = createAsyncThunk('user/forgotPassword', async(email, {rejectWithValue})=>{
+    try {
+        const config = {
+            headers:{
+                'Content-Type':'application/json'
+            }
+        }
+        const {data} = await axios.post('/api/v1/password/forgot', email, config);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || {message:'Email sent Failed'});
+    }
+})
+
+// Reset Password API
+export const resetPassword = createAsyncThunk('user/resetPassword', async({token, userData}, {rejectWithValue})=>{
+    try {
+        const config = {
+            headers:{
+                'Content-Type':'application/json'
+            }
+        }
+        const {data} = await axios.post(`/api/v1/reset/${token}`, userData, config);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || {message:'Email sent Failed'});
+    }
+})
+
 const userSlice = createSlice({
     name: 'user',
     initialState: {
@@ -179,6 +224,54 @@ const userSlice = createSlice({
         .addCase(updateProfile.rejected, (state, action)=>{
             state.loading = false;
             state.error = action.payload?.message || 'Profile Update Failed, Please try again Later';
+        })
+
+        // Update user Password cases
+        .addCase(updatePassword.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(updatePassword.fulfilled, (state, action)=>{
+            state.loading = false;
+            state.error = null;
+            state.success = action.payload?.success;
+        })
+        .addCase(updatePassword.rejected, (state, action)=>{
+            state.loading = false;
+            state.error = action.payload?.message || 'Password Update Failed';
+        })
+
+        // Forgot user Password cases
+        .addCase(forgotPassword.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(forgotPassword.fulfilled, (state, action)=>{
+            state.loading = false;
+            state.error = null;
+            state.success = action.payload?.success;
+            state.message = action.payload?.message;
+        })
+        .addCase(forgotPassword.rejected, (state, action)=>{
+            state.loading = false;
+            state.error = action.payload?.message || 'Email sent Failed';
+        })
+
+        // Reset user Password cases
+        .addCase(resetPassword.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(resetPassword.fulfilled, (state, action)=>{
+            state.loading = false;
+            state.error = null;
+            state.success = action.payload?.success;
+            state.user = null;
+            state.isAuthenticated = false;
+        })
+        .addCase(resetPassword.rejected, (state, action)=>{
+            state.loading = false;
+            state.error = action.payload?.message || 'Email sent Failed';
         })
     }
 })

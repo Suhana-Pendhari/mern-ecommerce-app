@@ -35,7 +35,7 @@ function UpdateProfile() {
         myForm.set("name", name);
         myForm.set("email", email);
         myForm.set("avatar", avatar);
-        dispatch(updateProfile(myForm))
+        dispatch(updateProfile(myForm));
     }
 
     useEffect(() => {
