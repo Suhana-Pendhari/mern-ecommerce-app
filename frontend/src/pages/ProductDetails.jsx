@@ -9,14 +9,21 @@ import { useParams } from 'react-router-dom';
 import { getProductDetails, removeErrors } from '../features/products/productSlice';
 import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
+import { addItemsToCart, removeMessage } from '../features/cart/cartSlice';
 
 
 function ProductDetails() {
     const [userRating, setUserRating] = useState(0);
+    const [quantity, setQuantity] = useState(1);
+
     const handleRatingChange = (newRating) => {
         setUserRating(userRating);
     }
     const { loading, error, product } = useSelector((state) => state.product);
+    const {loading:cartLoading, error:cartError, success, message, cartItems} = useSelector((state) => state.cart);
+    console.log(cartItems);
+    
+
     const dispatch = useDispatch();
     const { id } = useParams();
     useEffect(() => {
@@ -32,7 +39,18 @@ function ProductDetails() {
             toast.error(error.message, { position: 'top-center', autoClose: 3000 });
             dispatch(removeErrors())
         }
-    }, [dispatch, error]);
+        if (cartError) {
+            toast.error(cartError, { position: 'top-center', autoClose: 3000 });
+        }
+    }, [dispatch, error, cartError]);
+
+    useEffect(() => {
+        if (success) {
+            toast.success(message, { position: 'top-center', autoClose: 3000 });
+            dispatch(removeMessage());
+        }
+    }, [dispatch, success, message]);
+
     if(loading){
         return(
             <>
@@ -50,6 +68,26 @@ function ProductDetails() {
             <Footer/>
             </>
         )
+    }
+    const decreaseQuantity = ()=>{
+        if(quantity <= 1){
+            toast.error('Quantity cannot be less than 1!', { position: 'top-center', autoClose: 3000 });
+            dispatch(removeErrors());
+            return;
+        }
+        setQuantity(qty=>qty-1);
+    }
+    const increaseQuantity = ()=>{
+        if(product.stock<=quantity){
+            toast.error('Cannot exceed available stock!', { position: 'top-center', autoClose: 3000 });
+            dispatch(removeErrors());
+            return;
+        }
+        setQuantity(qty=>qty+1);
+    }
+
+    const addToCart = ()=>{
+        dispatch(addItemsToCart({id, quantity}));
     }
 
     return (
@@ -80,11 +118,11 @@ function ProductDetails() {
                         {product.stock>0 &&(<>
                             <div className="quantity-controls">
                                 <span className='quantity-label'>Quantity:</span>
-                                <button className="quantity-button">-</button>
-                                <input type="text" value={1} className='quantity-value' readOnly />
-                                <button className="quantity-button">+</button>
+                                <button className="quantity-button" onClick={decreaseQuantity}>-</button>
+                                <input type="text" value={quantity} className='quantity-value' readOnly />
+                                <button className="quantity-button" onClick={increaseQuantity}>+</button>
                             </div>
-                            <button className="add-to-cart-btn">Add to Cart</button>
+                            <button className="add-to-cart-btn" onClick={addToCart} disabled={cartLoading}>{cartLoading?'Adding':'Add to Cart'}</button>
                         </>)
                         }
 
