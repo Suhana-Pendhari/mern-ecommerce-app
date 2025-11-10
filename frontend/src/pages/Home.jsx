@@ -19,7 +19,7 @@ function Home() {
     useEffect(()=>{
         if(error){
             toast.error(error.message, {position:'top-center', autoClose:3000});
-            dispatch(removeErrors())
+            dispatch(removeErrors());
         }
     }, [dispatch, error])
     return (
