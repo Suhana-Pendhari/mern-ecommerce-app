@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 import Rating from '../components/Rating';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { getProductDetails, removeErrors } from '../features/products/productSlice';
+import { createReview, getProductDetails, removeErrors, removeSuccess } from '../features/products/productSlice';
 import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
 import { addItemsToCart, removeMessage } from '../features/cart/cartSlice';
@@ -15,14 +15,15 @@ import { addItemsToCart, removeMessage } from '../features/cart/cartSlice';
 function ProductDetails() {
     const [userRating, setUserRating] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [comment, setComment] = useState("");
 
     const handleRatingChange = (newRating) => {
-        setUserRating(userRating);
+        setUserRating(newRating);
     }
-    const { loading, error, product } = useSelector((state) => state.product);
-    const {loading:cartLoading, error:cartError, success, message, cartItems} = useSelector((state) => state.cart);
+    const { loading, error, product, reviewSuccess, reviewLoading } = useSelector((state) => state.product);
+    const { loading: cartLoading, error: cartError, success, message, cartItems } = useSelector((state) => state.cart);
     console.log(cartItems);
-    
+
 
     const dispatch = useDispatch();
     const { id } = useParams();
@@ -51,43 +52,67 @@ function ProductDetails() {
         }
     }, [dispatch, success, message]);
 
-    if(loading){
-        return(
-            <>
-            <Navbar/>
-            <Loader/>
-            <Footer/>
-            </>
-        )
-    }
-    if(error || !product){
-        return(
-            <>
-            <PageTitle title="Product Details"/>
-            <Navbar/>
-            <Footer/>
-            </>
-        )
-    }
-    const decreaseQuantity = ()=>{
-        if(quantity <= 1){
+    const decreaseQuantity = () => {
+        if (quantity <= 1) {
             toast.error('Quantity cannot be less than 1!', { position: 'top-center', autoClose: 3000 });
             dispatch(removeErrors());
             return;
         }
-        setQuantity(qty=>qty-1);
+        setQuantity(qty => qty - 1);
     }
-    const increaseQuantity = ()=>{
-        if(product.stock<=quantity){
+    const increaseQuantity = () => {
+        if (product.stock <= quantity) {
             toast.error('Cannot exceed available stock!', { position: 'top-center', autoClose: 3000 });
             dispatch(removeErrors());
             return;
         }
-        setQuantity(qty=>qty+1);
+        setQuantity(qty => qty + 1);
     }
 
-    const addToCart = ()=>{
-        dispatch(addItemsToCart({id, quantity}));
+    const addToCart = () => {
+        dispatch(addItemsToCart({ id, quantity }));
+    }
+
+    const handleReviewSubmit = (e) => {
+        e.preventDefault();
+        if (!userRating) {
+            toast.error('Please select a rating', { position: 'top-center', autoClose: 3000 });
+            return;
+        }
+        dispatch(createReview({
+            rating: userRating,
+            comment,
+            productId: id
+        }))
+    }
+
+    useEffect(() => {
+        if (reviewSuccess) {
+            toast.success('Review submitted Successfully!', { position: 'top-center', autoClose: 3000 });
+            setUserRating(0);
+            setComment('');
+            dispatch(removeSuccess());
+            dispatch(getProductDetails(id));
+        }
+    }, [reviewSuccess, id, dispatch])
+
+    if (loading) {
+        return (
+            <>
+                <Navbar />
+                <Loader />
+                <Footer />
+            </>
+        )
+    }
+    if (error || !product) {
+        return (
+            <>
+                <PageTitle title="Product Details" />
+                <Navbar />
+                <Footer />
+            </>
+        )
     }
 
     return (
@@ -97,7 +122,7 @@ function ProductDetails() {
             <div className="product-details-container">
                 <div className="product-detail-container">
                     <div className="product-image-container">
-                        <img src={product.image[0].url.replace('./','/')} alt={product.name} className='product-detail-image' />
+                        <img src={product.image[0].url.replace('./', '/')} alt={product.name} className='product-detail-image' />
                     </div>
 
                     <div className="product-info">
@@ -109,49 +134,49 @@ function ProductDetails() {
                                 value={product.ratings}
                                 disabled={true}
                             />
-                            <span className="productCardSpan">( {product.numOfReviews} {product.numOfReviews===1?"Review":"Reviews"} )</span>
+                            <span className="productCardSpan">( {product.numOfReviews} {product.numOfReviews === 1 ? "Review" : "Reviews"} )</span>
                         </div>
                         <div className="stock-status">
-                            <span className={product.stock>0?`in-stock`:`out-of-stock`}>{product.stock>0?`In Stock (${product.stock} available)`:`Out of Stock`}</span>
+                            <span className={product.stock > 0 ? `in-stock` : `out-of-stock`}>{product.stock > 0 ? `In Stock (${product.stock} available)` : `Out of Stock`}</span>
                         </div>
 
-                        {product.stock>0 &&(<>
+                        {product.stock > 0 && (<>
                             <div className="quantity-controls">
                                 <span className='quantity-label'>Quantity:</span>
                                 <button className="quantity-button" onClick={decreaseQuantity}>-</button>
                                 <input type="text" value={quantity} className='quantity-value' readOnly />
                                 <button className="quantity-button" onClick={increaseQuantity}>+</button>
                             </div>
-                            <button className="add-to-cart-btn" onClick={addToCart} disabled={cartLoading}>{cartLoading?'Adding':'Add to Cart'}</button>
+                            <button className="add-to-cart-btn" onClick={addToCart} disabled={cartLoading}>{cartLoading ? 'Adding' : 'Add to Cart'}</button>
                         </>)
                         }
 
-                        <form className="review-form">
+                        <form className="review-form" onSubmit={handleReviewSubmit}>
                             <h3>Write a Review</h3>
                             <Rating
-                                value={0}
+                                value={userRating}
                                 disabled={false}
                                 onRatingChange={handleRatingChange}
                             />
-                            <textarea placeholder='Write your review here..' className='review-input'></textarea>
-                            <button className="submit-review-btn">Submit Review</button>
+                            <textarea placeholder='Write your review here..' className='review-input' value={comment} onChange={(e) => setComment(e.target.value)} required></textarea>
+                            <button className="submit-review-btn" disabled={reviewLoading}>{reviewLoading ? 'Submitting...' : 'Submit Review'}</button>
                         </form>
                     </div>
                 </div>
 
                 <div className="reviews-container">
                     <h3>Customer Reviews</h3>
-                    {product.reviews && product.reviews.length>0?(<div className="reviews-section">
-                        {product.reviews.map((review, index)=>(
+                    {product.reviews && product.reviews.length > 0 ? (<div className="reviews-section">
+                        {product.reviews.map((review, index) => (
                             <div className="review-item" key={index}>
-                            <div className="review-header">
-                                <Rating value={review.rating} disabled={true} />
+                                <div className="review-header">
+                                    <Rating value={review.rating} disabled={true} />
+                                </div>
+                                <p className="review-comment">{review.comment}</p>
+                                <p className="review-name">By : {review.name}</p>
                             </div>
-                            <p className="review-comment">{review.comment}</p>
-                            <p className="review-name">By : {review.name}</p>
-                        </div>
                         ))}
-                    </div>):(
+                    </div>) : (
                         <p className="no-reviews">No reviews yet. Be the first to review this product!</p>
                     )}
                 </div>
