@@ -2,11 +2,30 @@ import Product from '../models/productModel.js';
 import HandleError from '../utils/handleError.js';
 import handleAsyncError from '../middleware/handleAsyncError.js';
 import APIFunctionality from '../utils/apiFunctionality.js';
+import {v2 as cloudinary} from 'cloudinary';
 
 // http://localhost:8000/api/v1/product/68d113fc2fd8c0a83c5a4c71?keyword=makeup
 
 // 1) creating products
 export const createProducts = handleAsyncError(async(req, res, next) => {
+    let image = [];
+    if(typeof req.body.image === "string"){
+        image.push(req.body.image);
+    }else{
+        image = req.body.image;
+    }
+    const imageLinks = [];
+    for(let i=0;i<image.length;i++){
+        const result = await cloudinary.uploader.upload(image[i],{
+            folder:'products'
+        })
+        imageLinks.push({
+            public_id:result.public_id,
+            url:result.secure_url
+        })
+    }
+    req.body.image = imageLinks;
+    
     req.body.user = req.user.id; // which admin is logged in and creating the product
     const product = await Product.create(req.body);
     res.status(201).json({

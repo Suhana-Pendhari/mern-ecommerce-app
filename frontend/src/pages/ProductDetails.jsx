@@ -15,6 +15,7 @@ import { addItemsToCart, removeMessage } from '../features/cart/cartSlice';
 function ProductDetails() {
     const [userRating, setUserRating] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [selectedImage, setSelectedImage] = useState('');
     const [comment, setComment] = useState("");
 
     const handleRatingChange = (newRating) => {
@@ -96,6 +97,11 @@ function ProductDetails() {
         }
     }, [reviewSuccess, id, dispatch])
 
+    useEffect(() => {
+        if (product && product.image && product.image.length > 0) {
+            setSelectedImage(product.image[0].url);
+        }
+    }, [product])
     if (loading) {
         return (
             <>
@@ -122,7 +128,12 @@ function ProductDetails() {
             <div className="product-details-container">
                 <div className="product-detail-container">
                     <div className="product-image-container">
-                        <img src={product.image[0].url.replace('./', '/')} alt={product.name} className='product-detail-image' />
+                        <img src={selectedImage} alt={product.name} className='product-detail-image' />
+                        {product.image.length > 1 && (<div className="product-thumbnails">
+                            {product.image.map((img, index) => (
+                                <img src={img.url} alt={`Thumbnail ${index + 1}`} className='thumbnail-image' onClick={() => setSelectedImage(img.url)} />
+                            ))}
+                        </div>)}
                     </div>
 
                     <div className="product-info">
