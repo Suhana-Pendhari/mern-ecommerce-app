@@ -33,15 +33,15 @@ function Navbar() {
     <nav className='navbar'>
         <div className="navbar-container">
             <div className="navbar-logo">
-                <Link to="/" onClick={()=>setIsMenuOpen(false)}>ShopEasy</Link>
+                <Link to="/" onClick={()=>setIsMenuOpen(false)}>SuhuShop</Link>
             </div>
 
             <div className={`navbar-links ${isMenuOpen? 'active': ""}`}>
                 <ul>
                     <li><Link to="/" onClick={()=>setIsMenuOpen(false)}>Home</Link></li>
                     <li><Link to="/products">Product</Link></li>
-                    <li><Link to="/about-us">About Us</Link></li>
-                    <li><Link to="/contact-us">Contact Us</Link></li>
+                    <li><Link to="/products">About Us</Link></li>
+                    <li><Link to="/products">Contact Us</Link></li>
                 </ul>
             </div>
 
