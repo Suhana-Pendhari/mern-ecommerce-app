@@ -72,9 +72,9 @@ export const getSingleUser = createAsyncThunk('admin/getSingleUser', async (id, 
 })
 
 // Update User role
-export const updateUserRole = createAsyncThunk('admin/updateUserRole', async ({userId,role}, { rejectWithValue }) => {
+export const updateUserRole = createAsyncThunk('admin/updateUserRole', async ({ userId, role }, { rejectWithValue }) => {
     try {
-        const { data } = await axios.put(`/api/v1/admin/user/${userId}`,{role});
+        const { data } = await axios.put(`/api/v1/admin/user/${userId}`, { role });
         return data;
     } catch (error) {
         return rejectWithValue(error.response?.data || 'Failed to Update User Role');
@@ -91,6 +91,43 @@ export const deleteUser = createAsyncThunk('admin/deleteUser', async (userId, { 
     }
 })
 
+// Fetch All Orders
+export const fetchAllOrders = createAsyncThunk('admin/fetchAllOrders', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`/api/v1/admin/orders`);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Fetch Orders');
+    }
+})
+
+
+// Delete order
+export const deleteOrder = createAsyncThunk('admin/deleteOrder', async (id, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.delete(`/api/v1/admin/order/${id}`);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Delete Order');
+    }
+})
+
+// Update order status
+export const updateOrderStatus = createAsyncThunk('admin/updateOrderStatus', async ({orderId,status}, { rejectWithValue }) => {
+    try {
+        const config={
+            headers:{
+                'Content-Type':'application/json'
+            }
+        }
+        const { data } = await axios.put(`/api/v1/admin/order/${orderId}`,{status},config);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Update Order Status');
+    }
+})
+
+
 const adminSlice = createSlice({
     name: 'admin',
     initialState: {
@@ -102,7 +139,10 @@ const adminSlice = createSlice({
         deleting: {},
         users: [],
         user: {},
-        message:null
+        message: null,
+        orders: [],
+        totalAmount:0,
+        order:{}
     },
     reducers: {
         removeErrors: (state) => {
@@ -111,8 +151,8 @@ const adminSlice = createSlice({
         removeSuccess: (state) => {
             state.success = false;
         },
-        clearMessage:(state)=>{
-            state.message=null;
+        clearMessage: (state) => {
+            state.message = null;
         }
     },
     extraReducers: (builder) => {
@@ -223,6 +263,48 @@ const adminSlice = createSlice({
             .addCase(deleteUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || 'Failed to Delete User';
+            })
+
+        builder.addCase(fetchAllOrders.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(fetchAllOrders.fulfilled, (state, action) => {
+                state.loading = false;
+                state.orders = action.payload.orders;
+                state.totalAmount = action.payload.totalAmount;
+            })
+            .addCase(fetchAllOrders.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Fetch Orders';
+            })
+
+        builder.addCase(deleteOrder.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(deleteOrder.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = action.payload.success;
+                state.message = action.payload.message;
+            })
+            .addCase(deleteOrder.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Delete Order';
+            })
+
+        builder.addCase(updateOrderStatus.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(updateOrderStatus.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = action.payload.success;
+                state.order = action.payload.order;
+            })
+            .addCase(updateOrderStatus.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Update Order Status';
             })
     }
 })
