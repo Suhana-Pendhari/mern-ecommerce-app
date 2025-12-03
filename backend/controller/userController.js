@@ -169,8 +169,8 @@ export const updateProfile = handleAsyncError(async (req, res, next) => {
             crop: 'scale'
         })
         updateUserDetails.avatar = {
-            public_id:myCloud.public_id,
-            url:myCloud.secure_url
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url
         }
     }
     const user = await User.findByIdAndUpdate(req.user.id, updateUserDetails, {
@@ -231,6 +231,9 @@ export const deleteUser = handleAsyncError(async (req, res, next) => {
     if (!user) {
         return next(new HandleError("User does not exists", 404));
     }
+    const imageId = user.avatar.public_id;
+    await cloudinary.uploader.destroy(imageId);
+
     res.status(200).json({
         success: true,
         message: "User deleted successfully!"

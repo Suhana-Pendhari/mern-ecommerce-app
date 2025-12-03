@@ -51,6 +51,46 @@ export const deleteProduct = createAsyncThunk('admin/deleteProduct', async (prod
     }
 })
 
+// Fetch all Users
+export const fetchUsers = createAsyncThunk('admin/fetchUsers', async (_, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`/api/v1/admin/users`);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Fetch Users');
+    }
+})
+
+// Get Single User
+export const getSingleUser = createAsyncThunk('admin/getSingleUser', async (id, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.get(`/api/v1/admin/user/${id}`);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Fetch Single User');
+    }
+})
+
+// Update User role
+export const updateUserRole = createAsyncThunk('admin/updateUserRole', async ({userId,role}, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.put(`/api/v1/admin/user/${userId}`,{role});
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Update User Role');
+    }
+})
+
+// Delete User 
+export const deleteUser = createAsyncThunk('admin/deleteUser', async (userId, { rejectWithValue }) => {
+    try {
+        const { data } = await axios.delete(`/api/v1/admin/user/${userId}`);
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || 'Failed to Delete User');
+    }
+})
+
 const adminSlice = createSlice({
     name: 'admin',
     initialState: {
@@ -59,7 +99,10 @@ const adminSlice = createSlice({
         loading: false,
         error: null,
         product: {},
-        deleting: {}
+        deleting: {},
+        users: [],
+        user: {},
+        message:null
     },
     reducers: {
         removeErrors: (state) => {
@@ -67,6 +110,9 @@ const adminSlice = createSlice({
         },
         removeSuccess: (state) => {
             state.success = false;
+        },
+        clearMessage:(state)=>{
+            state.message=null;
         }
     },
     extraReducers: (builder) => {
@@ -126,8 +172,60 @@ const adminSlice = createSlice({
                 state.deleting[productId] = false;
                 state.error = action.payload?.message || 'Product Deletion Failed';
             })
+
+        builder.addCase(fetchUsers.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(fetchUsers.fulfilled, (state, action) => {
+                state.loading = false;
+                state.users = action.payload.users;
+            })
+            .addCase(fetchUsers.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Fetch Users';
+            })
+
+        builder.addCase(getSingleUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(getSingleUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+            })
+            .addCase(getSingleUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Fetch Single User';
+            })
+
+        builder.addCase(updateUserRole.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(updateUserRole.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = action.payload.success;
+            })
+            .addCase(updateUserRole.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Update User Role';
+            })
+
+        builder.addCase(deleteUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+            .addCase(deleteUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.message = action.payload.message;
+            })
+            .addCase(deleteUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || 'Failed to Delete User';
+            })
     }
 })
 
-export const { removeErrors, removeSuccess } = adminSlice.actions;
+export const { removeErrors, removeSuccess, clearMessage } = adminSlice.actions;
 export default adminSlice.reducer;
